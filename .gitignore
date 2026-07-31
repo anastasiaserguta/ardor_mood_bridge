@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.tmp
+*.zip
+*.exe
+*.dll
+*.lib
+*.exp
+*.ts4script
+*.package
+build/
+dist/
+.venv/
+venv/
