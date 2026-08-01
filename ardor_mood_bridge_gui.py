@@ -45,6 +45,7 @@ class ArdorMoodBridgeApp:
         self.protocol_var = tk.StringVar(value="official_static")
         self.transport_var = tk.StringVar(value="write")
         self.interval_var = tk.StringVar(value="0.2")
+        self.brightness_var = tk.StringVar(value="4")
         self.mood_file_var = tk.StringVar(value=bridge.default_mood_file_path())
         self.config_file_var = tk.StringVar(value=self.color_config_path)
         self.status_var = tk.StringVar(value="Готово. Сначала нажми тест цвета или Старт.")
@@ -109,10 +110,14 @@ class ArdorMoodBridgeApp:
 
         ttk.Label(settings, text="Interval").grid(row=3, column=0, padx=8, pady=6, sticky="w")
         ttk.Entry(settings, textvariable=self.interval_var, width=8).grid(row=3, column=1, padx=8, pady=6, sticky="w")
-        ttk.Button(settings, text="Старт", command=self._start_watch).grid(row=3, column=3, padx=8, pady=6, sticky="e")
-        ttk.Button(settings, text="Стоп", command=self._stop_watch).grid(row=3, column=4, padx=8, pady=6, sticky="e")
+        ttk.Label(settings, text="Brightness").grid(row=3, column=2, padx=8, pady=6, sticky="w")
+        ttk.Spinbox(settings, from_=1, to=4, width=8, textvariable=self.brightness_var).grid(
+            row=3, column=3, padx=8, pady=6, sticky="w"
+        )
+        ttk.Button(settings, text="Старт", command=self._start_watch).grid(row=3, column=4, padx=8, pady=6, sticky="e")
+        ttk.Button(settings, text="Стоп", command=self._stop_watch).grid(row=3, column=5, padx=8, pady=6, sticky="e")
         ttk.Button(settings, text="Тест focused", command=lambda: self._test_mood("focused")).grid(
-            row=3, column=5, padx=8, pady=6, sticky="e"
+            row=4, column=5, padx=8, pady=6, sticky="e"
         )
 
         colors_frame = ttk.LabelFrame(self.root, text="Цвета настроений")
@@ -251,6 +256,7 @@ class ArdorMoodBridgeApp:
             path_index=path_index,
             protocol=self.protocol_var.get(),
             transport=self.transport_var.get(),
+            brightness=int(self.brightness_var.get().strip()),
             color_config=self.config_file_var.get(),
         )
 

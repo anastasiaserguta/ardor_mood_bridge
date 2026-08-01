@@ -15,6 +15,7 @@ Tested setup:
 - RGB HID interface: usually `HID index = 4`, `usage_page = 0xFF1C`
 - Working protocol: `official_static`
 - Working transport: `write`
+- Recommended brightness: `4`
 - Game: The Sims 4, Windows
 
 This is an experimental fan project. It is not affiliated with ARDOR, Razer, Maxis, or EA.
@@ -129,6 +130,14 @@ Documents\Electronic Arts\The Sims 4\ardor_mood_mod.log
 
 ### 2. Build the Windows App
 
+Use Python 3.12 or 3.11 for the Windows app build. Python 3.13 may try to compile `hidapi` from source and require Microsoft Visual C++ Build Tools.
+
+Install Python 3.12 if needed:
+
+```powershell
+winget install Python.Python.3.12
+```
+
 From the project root on Windows:
 
 ```powershell
@@ -151,6 +160,7 @@ Recommended settings for the tested ARDOR Guardian:
 HID index: 4
 Protocol: official_static
 Transport: write
+Brightness: 4
 Interval: 0.2
 ```
 
@@ -215,13 +225,13 @@ python ardor_chroma_bridge.py --path-index 4 --protocol official_static --transp
 Run only the mood watcher, without Flask:
 
 ```powershell
-python ardor_chroma_bridge.py --path-index 4 --protocol official_static --transport write --mood-watch --mood-interval 0.2 --no-server
+python ardor_chroma_bridge.py --path-index 4 --protocol official_static --transport write --brightness 4 --mood-watch --mood-interval 0.2 --no-server
 ```
 
 Run with the Chroma REST emulator enabled:
 
 ```powershell
-python ardor_chroma_bridge.py --path-index 4 --protocol official_static --transport write --mood-watch --mood-interval 0.2
+python ardor_chroma_bridge.py --path-index 4 --protocol official_static --transport write --brightness 4 --mood-watch --mood-interval 0.2
 ```
 
 ## Project Layout
@@ -256,7 +266,7 @@ ren CChromaEditorLibrary64.original.dll CChromaEditorLibrary64.dll
 If the keyboard does not change color:
 
 1. Press `Тест focused` in the app.
-2. If the test fails, check `HID index`, `Protocol`, and `Transport`.
+2. If the test fails, check `HID index`, `Protocol`, `Transport`, and `Brightness`.
 3. If the test works but Sims moods do not, check:
 
 ```powershell
@@ -267,6 +277,8 @@ Get-Content "$env:USERPROFILE\Documents\Electronic Arts\The Sims 4\ardor_mood_mo
 If `ardor_mood.txt` changes but the keyboard does not, the issue is in the bridge/HID side.
 
 If `ardor_mood.txt` does not change, the issue is in the Sims script mod installation or Sims settings.
+
+If the keyboard changes color but looks too dim, set `Brightness` to `4`. The bridge sends brightness together with every static-color packet, so a lower value can override the keyboard brightness selected by hardware keys or the official utility.
 
 ## Credits / References
 

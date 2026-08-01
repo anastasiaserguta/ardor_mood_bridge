@@ -50,6 +50,7 @@ effect_cache = {}
 selected_hid_path = None
 selected_protocol = "auto"
 selected_transport = "write"
+selected_brightness = EVISION_BRIGHTNESS_HIGHEST
 selected_color_config_path = None
 color_cache = {}
 color_cache_mtime = None
@@ -248,6 +249,10 @@ def parse_hex_bytes(text):
     return values
 
 
+def clamp_brightness(value):
+    return max(1, min(4, int(value)))
+
+
 def evision_simple_command(dev, command):
     packet = [0x00] * 64
     packet[0] = 0x04
@@ -264,7 +269,7 @@ def evision_set_mode_ex(dev, mode, red, green, blue):
     packet[4] = 8
     packet[5] = 0
     packet[8] = mode
-    packet[9] = EVISION_BRIGHTNESS_HIGHEST
+    packet[9] = selected_brightness
     packet[10] = EVISION_SPEED_NORMAL
     packet[11] = 0
     packet[12] = 0
@@ -317,7 +322,7 @@ def send_official_static(dev, red, green, blue):
     packet[3] = EVISION_CMD_SET_PARAMETER
     packet[4] = 0x22
     packet[9] = EVISION_MODE_STATIC
-    packet[10] = 0x01
+    packet[10] = selected_brightness
     packet[12] = 0xFF
     packet[14] = red
     packet[15] = green
@@ -536,16 +541,25 @@ def mood_to_rgb_for_intensity(name, intensity):
     return mood, None
 
 
-def configure_bridge(path_index=None, path_contains=None, protocol="official_static", transport="write", color_config=None):
+def configure_bridge(
+    path_index=None,
+    path_contains=None,
+    protocol="official_static",
+    transport="write",
+    color_config=None,
+    brightness=EVISION_BRIGHTNESS_HIGHEST,
+):
     global selected_hid_path
     global selected_protocol
     global selected_transport
+    global selected_brightness
     global selected_color_config_path
     global color_cache
     global color_cache_mtime
 
     selected_protocol = protocol
     selected_transport = transport
+    selected_brightness = clamp_brightness(brightness)
     selected_color_config_path = color_config or default_color_config_path()
     color_cache = {}
     color_cache_mtime = None
@@ -554,6 +568,7 @@ def configure_bridge(path_index=None, path_contains=None, protocol="official_sta
     logger.info("HID: Активный path: %r", selected_hid_path)
     logger.info("HID: Протокол: %s", selected_protocol)
     logger.info("HID: Транспорт: %s", selected_transport)
+    logger.info("HID: Яркость: %s/4", selected_brightness)
     logger.info("Mood colors: конфиг %s", selected_color_config_path)
 
     return selected_hid_path
@@ -882,6 +897,12 @@ def parse_args():
         default=os.environ.get("ARDOR_TRANSPORT", "write"),
         help="Как отправлять HID report: hid.write или Windows HidD_SetOutputReport.",
     )
+    parser.add_argument(
+        "--brightness",
+        type=int,
+        default=int(os.environ.get("ARDOR_BRIGHTNESS", EVISION_BRIGHTNESS_HIGHEST)),
+        help="Яркость подсветки 1..4, где 4 - максимум.",
+    )
     parser.add_argument("--debug", action="store_true", help="Подробные HID-логи.")
     parser.add_argument(
         "--mood-watch",
@@ -932,6 +953,7 @@ def main():
         path_contains=args.path_contains,
         protocol=args.protocol,
         transport=args.transport,
+        brightness=args.brightness,
         color_config=args.color_config,
     )
 

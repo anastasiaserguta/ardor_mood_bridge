@@ -3,18 +3,40 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
 
-function Invoke-BridgePython {
-  if (Get-Command python -ErrorAction SilentlyContinue) {
-    python @args
-  } else {
-    py -3 @args
+function Select-BridgePython {
+  $candidates = @(
+    @{ Exe = "py"; Args = @("-3.12") },
+    @{ Exe = "py"; Args = @("-3.11") },
+    @{ Exe = "py"; Args = @("-3.10") },
+    @{ Exe = "python"; Args = @() }
+  )
+
+  foreach ($candidate in $candidates) {
+    if (!(Get-Command $candidate.Exe -ErrorAction SilentlyContinue)) {
+      continue
+    }
+
+    & $candidate.Exe @($candidate.Args) -c "import sys; raise SystemExit(0 if sys.version_info < (3, 13) else 1)" 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      $script:PythonExe = $candidate.Exe
+      $script:PythonPrefixArgs = $candidate.Args
+      & $script:PythonExe @($script:PythonPrefixArgs) -c "import sys; print('Using Python:', sys.executable); print(sys.version)"
+      return
+    }
   }
+
+  throw "Python 3.12 or 3.11 is recommended for this build. Python 3.13 may try to build hidapi from source and require Visual C++ Build Tools."
+}
+
+function Invoke-BridgePython {
+  & $script:PythonExe @($script:PythonPrefixArgs) @args
 
   if ($LASTEXITCODE -ne 0) {
     throw "Python command failed: $args"
   }
 }
 
+Select-BridgePython
 Invoke-BridgePython -m pip install --upgrade pip
 
 if (Test-Path "$root\requirements.txt") {
